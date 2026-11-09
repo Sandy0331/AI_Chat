@@ -78,39 +78,34 @@ def ask(req: ChatReq):
 def agent(req: ChatReq):
     messages = [{"role": "user", "content": req.question}]
 
-    # 第一轮：问大模型要不要调工具
-    resp = client.chat.completions.create(
-        model = "deepseek-chat",
-        messages = messages,
-        tools = tools            # 把外部工具喂进去
-    )
-    msg = resp.choices[0].message
-
-    tool_used = []
-    if msg.tool_calls:
-        messages.append(msg)               # 把大模型它的第一轮“决定”放进对话历史
-        for call in msg.tool_calls:
-            func_tool = call.function.name
-            tool_used.append(func_tool)
-            args = json.loads(call.function.arguments)
-            result = tools_map[func_tool](**args)   # 调用执行工具函数
-
-            # 将该工具在msg中的id，以及使用该工具后的返回结果加进对话历史
-            messages.append({"role": "tool", "tool_call_id": call.id, "content": result})
-
-
-        # 第二轮：把执行结果喂回去，让大模型生成最终答案
-        resp2 = client.chat.completions.create(
+    max_steps = 5                # 防死循环保护
+    tool_used = []               # 用列表收集调用了的工具名，便于溯源
+    for step in range(max_steps):
+        # 问大模型要不要调工具，一轮思考 # 非一轮：观察，思考
+        resp = client.chat.completions.create(
             model = "deepseek-chat",
             messages = messages,
-            tools = tools
+            tools = tools            # 把外部工具喂进去
         )
-        # 将最终大模型答复以及使用过的工具进行返回（可溯源大模型调用了哪些工具）
-        return {"answer": resp2.choices[0].message.content, "tools": tool_used }
+        msg = resp.choices[0].message
 
-    else:
-        return {"answer": resp.choices[0].message.content, "tools": None}
+        if not msg.tool_calls:            # 决定这轮不调工具，行动
+            # 返回最终答复、调用链与推理步数可溯源
+            return {"answer": msg.content, "tool_used": tool_used, "steps": step + 1}
 
+        else:                                  # 决定这轮调工具
+            messages.append(msg)               # 把大模型的这轮“决定”放进对话历史
+            for call in msg.tool_calls:         # 支持多工具并行调用
+                func_tool = call.function.name
+                tool_used.append(func_tool)
+                args = json.loads(call.function.arguments)
+                result = tools_map[func_tool](**args)   # 调用执行工具函数，行动
+
+                # 下一轮大模型根据这次结果进行决策 -- 将该工具在msg中的id，以及使用该工具后的返回结果加进对话历史
+                messages.append({"role": "tool", "tool_call_id": call.id, "content": result})
+
+    # 超过最大步数还没结束
+    return {"answer": "已达到最大推理步数（防死循环保护）", "tool_used": tool_used, "steps": max_steps }
 
 
 
