@@ -6,8 +6,9 @@ AI Chat
 
 - **RAG 知识库问答**：文档切片向量化入库、语义检索 top-k、检索增强生成（Retrieval-Augmented Generation），支持基于企业私有资料的准确问答与可溯源，通过 system prompt 抑制幻觉
 - **Agent 多步推理（ReAct）**：基于Function Calling实现"思考->行动->观察->再思考"的循环推理，大模型可根据上一步工具结果自主决定连续调用多个外部工具完成复合任务（如先查时间再做计算）   
-          带最大步骤保护防死循环，返回调用链与推理步数可溯源
-采用 OpenAI 兼容协议（base_url 可切换），实现模型无关架构；Pydantic 做接口入参校验，.env 管理 API Key，.gitignore 排除敏感配置。
+          带最大步骤保护防死循环，返回调用链与推理步数可溯源       
+采用 OpenAI 兼容协议（base_url 可切换），实现模型无关架构；  
+Pydantic 做接口入参校验，.env 管理 API Key，.gitignore 排除敏感配置。
 
 ## 功能特性
 实现的接口：
