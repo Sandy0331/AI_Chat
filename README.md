@@ -8,7 +8,11 @@ AI Chat
 - **Agent 多步推理（ReAct）**：基于Function Calling实现"思考->行动->观察->再思考"的循环推理，大模型可根据上一步工具结果自主决定连续调用多个外部工具完成复合任务（如先查时间再做计算）   
           带最大步骤保护防死循环，返回调用链与推理步数可溯源       
 采用 OpenAI 兼容协议（base_url 可切换），实现模型无关架构；  
-Pydantic 做接口入参校验，.env 管理 API Key，.gitignore 排除敏感配置。
+Pydantic 做接口入参校验     
+.env 管理 API Key       
+.gitignore 排除敏感配置     
+SSE流式输出            
+![流式输出演示](stream_demo.gif)
 
 ## 功能特性
 实现的接口：

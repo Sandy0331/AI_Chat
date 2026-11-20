@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from llm import chat, client
+from llm import chat, client, stream_chat
 from fastapi.openapi.docs import get_swagger_ui_html
 from kb import collection
 from tools import tools, tools_map
-import json
+import json, time, os
+from fastapi.responses import StreamingResponse, FileResponse
 
 
 # 创建FastAPI实例
@@ -66,6 +67,24 @@ def ask(req: ChatReq):
     return {"answer" : resp.choices[0].message.content,"context" : context}
 
 """
+    SSE流式输出：
+        将原有的同步调用模型--将结果一次性完整给到前端，
+        改为了取一块数据直接推给前端一块数据，的流式输出方式，做出优化    
+"""
+@app.post("/ask_stream")
+def ask_stream(req: ChatReq):
+    return StreamingResponse(stream_chat(req.question), media_type="text/plain")
+
+@app.get("/")
+def serve_frontend():
+    # 获取当前 main.py 所在的绝对路径，拼接出 html 的路径
+    file_path = os.path.join(os.path.dirname(__file__), "stream_test.http")
+
+    # 返回 HTML 文件
+    return FileResponse(file_path, media_type="text/html")
+
+
+"""
    功能：工具调用 
    技术：Function Calling / Agent
    实现：用户向大模型提问题，大模型检验外部工具库tools中是否有符合这个问题的工具可使用，
@@ -106,6 +125,14 @@ def agent(req: ChatReq):
 
     # 超过最大步数还没结束
     return {"answer": "已达到最大推理步数（防死循环保护）", "tool_used": tool_used, "steps": max_steps }
+
+@app.get("/stream_demo")
+def stream_demo():
+    def gen():
+        for i in range(5):
+            yield f"第{i}段\n"
+            time.sleep(1)
+    return StreamingResponse(gen(), media_type="text/plain")
 
 
 
