@@ -11,8 +11,11 @@ AI Chat
 Pydantic 做接口入参校验     
 .env 管理 API Key       
 .gitignore 排除敏感配置     
-SSE流式输出            
-![流式输出演示](stream_demo.gif)
+
+### SSE流式输出与引用溯源
+流式输出时，接口会先返回命中的文档来源，再返回答案正文，用户可以核对答案是否来自知识库。            
+![流式输出与引用溯源](overtime_demo.gif)
+
 
 ## 功能特性
 实现的接口：

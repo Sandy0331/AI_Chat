@@ -28,10 +28,15 @@ def chat(question: str) ->str:
 """
     SSE流式响应大模型对话
 """
-def stream_chat(prompt: str):
-    # 向量库检索
-    results = collection.query(query_texts=[prompt], n_results=2)
-    context = "\n".join(results["documents"][0])
+def stream_chat(prompt: str, docs: list, sources: list):
+
+    # 第一步： 先向前端SSE流推引用溯源（不放进LLM中是为了防止大模型幻觉丢失溯源）
+    # sources列表转拼接JSON字符串
+    yield "【来源】"+ "、".join(sources) + "\n\n"
+
+    # 第二步：再推模型输出
+    # docs列表转拼接JSON字符串
+    context = "\n".join(docs)
 
     # 把资料和问题拼进prompt
     stream = client.chat.completions.create(

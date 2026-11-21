@@ -24,8 +24,12 @@ docs = [
 
 collection.add(
     ids = ["doc1","doc2","doc3"],
-    documents = docs
+    documents = docs,
+    metadatas = [                       # 元数据（doc对应文件名）
+        {"source": "报销流程.md"},
+        {"source": "年假规则.md"},
+        {"source": "加班规定.md"}
+    ]
 )
 
-#print(f"知识库已入库，共{collection.count()}条")
 print("知识库已入库，共", collection.count(), "条")

@@ -38,10 +38,13 @@ def search_api(q: str, k: int=2):
         query_texts = [q],
         n_results = k
     )
-    return {"query": q, "matched": result["documents"][0]}
+    docs = result["documents"][0]
+    metas = result["metadatas"][0]   # 检索到资料的文本对应的元数据（文件名）
+    return docs, metas
 
 
 """
+   没加引用溯源和SSE流实现版本
    功能：RAG知识库问答 
    技术：检索增强生成
    实现：创建对话请求
@@ -67,14 +70,22 @@ def ask(req: ChatReq):
     return {"answer" : resp.choices[0].message.content,"context" : context}
 
 """
+    加了引用溯源和SSE流式输出版本的 RAG问答系统
     SSE流式输出：
         将原有的同步调用模型--将结果一次性完整给到前端，
         改为了取一块数据直接推给前端一块数据，的流式输出方式，做出优化    
 """
 @app.post("/ask_stream")
 def ask_stream(req: ChatReq):
-    return StreamingResponse(stream_chat(req.question), media_type="text/plain")
+    docs, metas = search_api(req.question)
+    sources = [m.get("source","未知文档") for m in metas]    # 遍历提取字典中"source"对应的value,并放入列表中，如果没找到放入“未知文档”
+    sources = list(dict.fromkeys(sources))                 # 利用字典去重列表，且保持原有顺序
+    return StreamingResponse(stream_chat(req.question, docs, sources), media_type="text/plain")
 
+
+"""
+    文件响应模式接口连接前端浏览器，用于SSE流式输出
+"""
 @app.get("/")
 def serve_frontend():
     # 获取当前 main.py 所在的绝对路径，拼接出 html 的路径
